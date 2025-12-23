@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { snapConnections } from '@/db/schema';
-import { eq, sql } from 'drizzle-orm';
 import { getAdAccountStats } from '@/lib/snapchat';
-import { decrypt } from '@/lib/encryption';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const storeId = searchParams.get('storeId');
+  const accessToken = searchParams.get('accessToken');
+  const adAccountId = searchParams.get('adAccountId');
   const startDate = searchParams.get('startDate');
   const endDate = searchParams.get('endDate');
 
-  if (!storeId || !startDate || !endDate) {
+  if (!accessToken || !adAccountId || !startDate || !endDate) {
     return NextResponse.json(
       { error: 'Missing required parameters' },
       { status: 400 }
@@ -19,29 +16,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // الحصول على اتصال Snapchat للمتجر
-    const connectionResult: any = await db.execute(sql`
-      SELECT * FROM snap_connections 
-      WHERE store_id = ${storeId} AND is_active = true 
-      LIMIT 1
-    `);
-
-    if (!connectionResult || connectionResult.length === 0) {
-      return NextResponse.json(
-        { error: 'No Snapchat connection found' },
-        { status: 404 }
-      );
-    }
-
-    const connection = connectionResult[0];
-
-    // فك تشفير access token
-    const accessToken = decrypt(connection.access_token);
-
     // جلب البيانات من Snapchat
     const insights = await getAdAccountStats(
       accessToken,
-      connection.ad_account_id,
+      adAccountId,
       startDate,
       endDate
     );

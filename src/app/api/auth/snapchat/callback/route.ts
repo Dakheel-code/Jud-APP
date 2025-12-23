@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { stores, snapConnections } from '@/db/schema';
 import { exchangeCodeForToken, getAdAccounts } from '@/lib/snapchat';
-import { encrypt } from '@/lib/encryption';
-import { sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -12,70 +8,45 @@ export async function GET(request: NextRequest) {
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL('/?error=invalid_callback', request.url)
+      new URL('/?error=missing_parameters', request.url)
     );
   }
 
   try {
     // فك تشفير بيانات المتجر من state
-    let stateData;
-    try {
-      stateData = JSON.parse(Buffer.from(state, 'base64').toString());
-    } catch (e) {
-      console.error('Failed to decode state:', e);
-      return NextResponse.redirect(
-        new URL('/?error=invalid_state', request.url)
-      );
-    }
+    const storeData = JSON.parse(Buffer.from(state, 'base64').toString());
+    const { storeName, storeUrl } = storeData;
 
-    const { storeName, storeUrl } = stateData;
-
-    // الحصول على access token من Snapchat
-    let tokenData;
-    try {
-      tokenData = await exchangeCodeForToken(code);
-    } catch (e) {
-      console.error('Failed to exchange code for token:', e);
-      return NextResponse.redirect(
-        new URL('/?error=token_exchange_failed', request.url)
-      );
-    }
+    // تبديل code بـ access token
+    const tokenData = await exchangeCodeForToken(code);
 
     // الحصول على Ad Accounts
-    let adAccounts: any[] = [];
-    try {
-      adAccounts = await getAdAccounts(tokenData.access_token);
-    } catch (e) {
-      console.error('Failed to get ad accounts:', e);
-      // حتى لو فشل، نكمل بدون ad account
-      adAccounts = [];
+    const adAccounts = await getAdAccounts(tokenData.access_token);
+
+    if (!adAccounts || adAccounts.length === 0) {
+      return NextResponse.redirect(
+        new URL('/?error=no_ad_accounts', request.url)
+      );
     }
 
-    const primaryAdAccount = adAccounts.length > 0 ? adAccounts[0] : null;
+    const primaryAdAccount = adAccounts[0];
 
-    // إنشاء المتجر في قاعدة البيانات
-    const storeResult: any = await db.execute(sql`
-      INSERT INTO stores (store_name, store_url)
-      VALUES (${storeName}, ${storeUrl || null})
-      RETURNING id
-    `);
+    // إنشاء بيانات الجلسة
+    const sessionData = {
+      storeName,
+      storeUrl,
+      accessToken: tokenData.access_token,
+      refreshToken: tokenData.refresh_token,
+      adAccountId: primaryAdAccount.id,
+      expiresAt: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
+    };
 
-    const storeId = storeResult[0]?.id || storeResult.rows?.[0]?.id;
+    // تشفير البيانات وإرسالها كـ query parameter
+    const encodedSession = Buffer.from(JSON.stringify(sessionData)).toString('base64');
 
-    // حفظ اتصال Snapchat إذا كان هناك ad account
-    if (primaryAdAccount) {
-      const expiresAt = new Date();
-      expiresAt.setSeconds(expiresAt.getSeconds() + tokenData.expires_in);
-
-      await db.execute(sql`
-        INSERT INTO snap_connections (store_id, ad_account_id, access_token, refresh_token, token_expires_at, is_active)
-        VALUES (${storeId}, ${primaryAdAccount.id}, ${encrypt(tokenData.access_token)}, ${encrypt(tokenData.refresh_token)}, ${expiresAt}, ${true})
-      `);
-    }
-
-    // التوجيه إلى Dashboard مع معرف المتجر
+    // التوجيه إلى Dashboard مع البيانات
     return NextResponse.redirect(
-      new URL(`/dashboard?storeId=${storeId}&store=${encodeURIComponent(storeName)}`, request.url)
+      new URL(`/dashboard?session=${encodedSession}`, request.url)
     );
   } catch (error) {
     console.error('Snapchat OAuth error:', error);

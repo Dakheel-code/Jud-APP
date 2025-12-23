@@ -25,9 +25,8 @@ interface StatsData {
 
 function DashboardContent() {
   const searchParams = useSearchParams();
-  const storeId = searchParams.get('storeId');
-  const storeName = searchParams.get('store') || 'متجرك';
   
+  const [storeName, setStoreName] = useState('متجرك');
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -37,19 +36,48 @@ function DashboardContent() {
   });
 
   useEffect(() => {
-    if (!storeId) {
-      setError('معرف المتجر غير موجود');
+    const savedSession = localStorage.getItem('snapchat_session');
+    if (savedSession) {
+      const sessionData = JSON.parse(savedSession);
+      setStoreName(sessionData.storeName || 'متجرك');
+    }
+  }, []);
+
+  useEffect(() => {
+    const sessionParam = searchParams.get('session');
+    
+    if (sessionParam) {
+      try {
+        const sessionData = JSON.parse(atob(sessionParam));
+        localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
+        window.history.replaceState({}, '', '/dashboard');
+      } catch (err) {
+        console.error('Failed to parse session:', err);
+      }
+    }
+
+    const savedSession = localStorage.getItem('snapchat_session');
+    if (!savedSession) {
+      setError('لا توجد جلسة نشطة. يرجى الربط مع Snapchat من جديد.');
       setLoading(false);
       return;
     }
 
     fetchStats();
-  }, [storeId, dateRange]);
+  }, [dateRange]);
 
   const fetchStats = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/insights?storeId=${storeId}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`);
+      const savedSession = localStorage.getItem('snapchat_session');
+      if (!savedSession) {
+        throw new Error('No session found');
+      }
+
+      const sessionData = JSON.parse(savedSession);
+      const response = await fetch(
+        `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${sessionData.adAccountId}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+      );
       
       if (!response.ok) {
         throw new Error('فشل في جلب البيانات');
@@ -66,19 +94,6 @@ function DashboardContent() {
     }
   };
 
-  if (!storeId) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-xl shadow-lg p-8 text-center max-w-md">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">خطأ</h2>
-          <p className="text-gray-600 mb-6">معرف المتجر غير موجود</p>
-          <a href="/" className="inline-block bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition">
-            العودة للصفحة الرئيسية
-          </a>
-        </div>
-      </div>
-    );
-  }
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('ar-SA', {
