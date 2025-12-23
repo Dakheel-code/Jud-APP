@@ -27,6 +27,8 @@ function DashboardContent() {
   const searchParams = useSearchParams();
   
   const [storeName, setStoreName] = useState('متجرك');
+  const [adAccounts, setAdAccounts] = useState<Array<{id: string, name: string, status: string}>>([]);
+  const [selectedAdAccountId, setSelectedAdAccountId] = useState<string>('');
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +42,8 @@ function DashboardContent() {
     if (savedSession) {
       const sessionData = JSON.parse(savedSession);
       setStoreName(sessionData.storeName || 'متجرك');
+      setAdAccounts(sessionData.adAccounts || []);
+      setSelectedAdAccountId(sessionData.selectedAdAccountId || '');
     }
   }, []);
 
@@ -64,7 +68,7 @@ function DashboardContent() {
     }
 
     fetchStats();
-  }, [dateRange]);
+  }, [dateRange, selectedAdAccountId]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -75,8 +79,14 @@ function DashboardContent() {
       }
 
       const sessionData = JSON.parse(savedSession);
+      const accountId = selectedAdAccountId || sessionData.selectedAdAccountId;
+      
+      if (!accountId) {
+        throw new Error('No ad account selected');
+      }
+
       const response = await fetch(
-        `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${sessionData.adAccountId}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+        `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${accountId}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
       );
       
       if (!response.ok) {
@@ -91,6 +101,18 @@ function DashboardContent() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAdAccountChange = (accountId: string) => {
+    setSelectedAdAccountId(accountId);
+    
+    // تحديث localStorage
+    const savedSession = localStorage.getItem('snapchat_session');
+    if (savedSession) {
+      const sessionData = JSON.parse(savedSession);
+      sessionData.selectedAdAccountId = accountId;
+      localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
     }
   };
 
@@ -127,6 +149,25 @@ function DashboardContent() {
       </nav>
 
       <div className="container mx-auto px-4 py-8">
+        {adAccounts.length > 1 && (
+          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <div className="flex items-center gap-4">
+              <label className="text-sm font-semibold text-gray-700">اختر الحساب الإعلاني:</label>
+              <select
+                value={selectedAdAccountId}
+                onChange={(e) => handleAdAccountChange(e.target.value)}
+                className="border border-gray-300 rounded-lg px-4 py-2 flex-1 max-w-md"
+              >
+                {adAccounts.map((account) => (
+                  <option key={account.id} value={account.id}>
+                    {account.name} ({account.status})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center gap-4 flex-wrap">
             <Calendar className="w-6 h-6 text-primary-600" />

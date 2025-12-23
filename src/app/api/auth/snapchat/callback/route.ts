@@ -29,15 +29,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const primaryAdAccount = adAccounts[0];
-
-    // إنشاء بيانات الجلسة
+    // إنشاء بيانات الجلسة مع جميع الحسابات الإعلانية
     const sessionData = {
       storeName,
       storeUrl,
       accessToken: tokenData.access_token,
       refreshToken: tokenData.refresh_token,
-      adAccountId: primaryAdAccount.id,
+      adAccounts: adAccounts.map(acc => ({
+        id: acc.id,
+        name: acc.name,
+        status: acc.status
+      })),
+      selectedAdAccountId: adAccounts[0].id, // الحساب الافتراضي
       expiresAt: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
     };
 
