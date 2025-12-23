@@ -132,9 +132,9 @@ export async function getAdAccountStats(
   endDate: string
 ): Promise<SnapchatInsight[]> {
   try {
-    // تحويل التاريخ إلى صيغة ISO 8601
-    const startDateTime = `${startDate}T00:00:00.000Z`;
-    const endDateTime = `${endDate}T23:59:59.999Z`;
+    // تحويل التاريخ إلى صيغة ISO 8601 بدون milliseconds
+    const startDateTime = `${startDate}T00:00:00Z`;
+    const endDateTime = `${endDate}T23:59:59Z`;
 
     console.log(`Fetching stats for account ${adAccountId} from ${startDateTime} to ${endDateTime}`);
 
@@ -143,6 +143,7 @@ export async function getAdAccountStats(
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
         },
         params: {
           granularity: 'DAY',
@@ -152,10 +153,12 @@ export async function getAdAccountStats(
           swipe_up_attribution_window: '28_DAY',
           view_attribution_window: '7_DAY',
         },
+        timeout: 30000, // 30 seconds timeout
       }
     );
 
-    console.log('Snapchat API Response:', JSON.stringify(response.data, null, 2));
+    console.log('Snapchat API Response status:', response.status);
+    console.log('Snapchat API Response data:', JSON.stringify(response.data, null, 2));
 
     const stats = response.data.timeseries_stats || [];
     
@@ -193,12 +196,35 @@ export async function getAdAccountStats(
     console.log(`Returning ${mappedStats.length} stats records`);
     return mappedStats;
   } catch (error: any) {
-    console.error('Error fetching Snapchat stats:');
+    console.error('=== Error fetching Snapchat stats ===');
     console.error('Error message:', error.message);
-    console.error('Error response:', error.response?.data);
-    console.error('Error status:', error.response?.status);
+    console.error('Error response data:', JSON.stringify(error.response?.data, null, 2));
+    console.error('Error response status:', error.response?.status);
+    console.error('Error response headers:', error.response?.headers);
+    console.error('Request config:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      params: error.config?.params,
+    });
     
-    // إرجاع بيانات فارغة مع رسالة خطأ
-    throw new Error(`Failed to fetch stats: ${error.response?.data?.error?.message || error.message}`);
+    // إذا كان الخطأ 401 أو 403، المشكلة في التوثيق
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      throw new Error('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى');
+    }
+    
+    // إذا كان الخطأ 404، المشكلة في معرف الحساب
+    if (error.response?.status === 404) {
+      throw new Error('الحساب الإعلاني غير موجود أو ليس لديك صلاحية الوصول إليه');
+    }
+    
+    // إذا كان الخطأ 400، المشكلة في البارامترات
+    if (error.response?.status === 400) {
+      const errorMsg = error.response?.data?.error?.message || 'خطأ في البارامترات المرسلة';
+      throw new Error(`خطأ في الطلب: ${errorMsg}`);
+    }
+    
+    // أي خطأ آخر
+    const errorMessage = error.response?.data?.error?.message || error.message || 'فشل في جلب البيانات';
+    throw new Error(`فشل في جلب البيانات من Snapchat: ${errorMessage}`);
   }
 }
