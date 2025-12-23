@@ -20,6 +20,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl" className={cairo.variable}>
+      <head>
+        <meta charSet="utf-8" />
+      </head>
       <body className="font-sans antialiased bg-gray-50">
         {children}
       </body>
