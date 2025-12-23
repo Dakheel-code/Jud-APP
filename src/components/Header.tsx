@@ -7,7 +7,7 @@ export default function Header() {
   const [logoError, setLogoError] = useState(false);
 
   return (
-    <header className="bg-white shadow-sm border-b">
+    <header className="bg-gradient-to-r from-purple-900 via-purple-800 to-blue-900 shadow-lg">
       <div className="container mx-auto px-4 py-4">
         <div className="flex justify-between items-center">
           <Link href="/" className="flex items-center">
@@ -19,15 +19,15 @@ export default function Header() {
                 onError={() => setLogoError(true)}
               />
             ) : (
-              <span className="text-2xl font-bold text-primary-600">جود</span>
+              <span className="text-2xl font-bold text-white">جود</span>
             )}
           </Link>
           
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/" className="text-gray-700 hover:text-primary-600 font-medium transition">
+            <Link href="/" className="text-white hover:text-purple-200 font-medium transition">
               الرئيسية
             </Link>
-            <Link href="/dashboard" className="text-gray-700 hover:text-primary-600 font-medium transition">
+            <Link href="/dashboard" className="text-white hover:text-purple-200 font-medium transition">
               لوحة التحكم
             </Link>
           </nav>
