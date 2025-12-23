@@ -192,7 +192,7 @@ function SelectAccountContent() {
           ))
           ) : (
             <div className="text-center py-8 text-gray-500">
-              لا توجد نتائج للبحث "{searchQuery}"
+              لا توجد نتائج للبحث &quot;{searchQuery}&quot;
             </div>
           )}
         </div>
