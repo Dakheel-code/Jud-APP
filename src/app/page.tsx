@@ -1,10 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/router';
 
 export default function HomePage() {
-  const router = useRouter();
   const [storeName, setStoreName] = useState('');
   const [storeUrl, setStoreUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
