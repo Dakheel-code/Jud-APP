@@ -143,7 +143,6 @@ export async function getAdAccountStats(
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
         },
         params: {
           granularity: 'DAY',
@@ -154,11 +153,31 @@ export async function getAdAccountStats(
           view_attribution_window: '1_DAY',
         },
         timeout: 30000, // 30 seconds timeout
+        validateStatus: (status) => status < 500, // Accept any status < 500
       }
     );
 
     console.log('Snapchat API Response status:', response.status);
     console.log('Snapchat API Response data:', JSON.stringify(response.data, null, 2));
+
+    // التحقق من أخطاء API
+    if (response.status === 401 || response.status === 403) {
+      throw new Error('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى');
+    }
+    
+    if (response.status === 404) {
+      throw new Error('الحساب الإعلاني غير موجود أو ليس لديك صلاحية الوصول إليه');
+    }
+    
+    if (response.status === 400) {
+      const errorMsg = response.data?.error?.message || response.data?.error_description || 'خطأ في البارامترات المرسلة';
+      throw new Error(`خطأ في الطلب: ${errorMsg}`);
+    }
+
+    if (response.status >= 400) {
+      const errorMsg = response.data?.error?.message || response.data?.error_description || 'خطأ غير معروف';
+      throw new Error(`خطأ من Snapchat API (${response.status}): ${errorMsg}`);
+    }
 
     // التحقق من وجود البيانات في الاستجابة
     const responseData = response.data;
