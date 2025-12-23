@@ -93,8 +93,8 @@ function ConnectPlatformsContent() {
               )}
 
               <div className="flex flex-col items-center text-center">
-                <div className={`w-20 h-20 ${platform.color} rounded-full flex items-center justify-center mb-4 text-white text-4xl`}>
-                  {platform.icon}
+                <div className={`w-20 h-20 ${platform.color} rounded-full flex items-center justify-center mb-4 text-white`}>
+                  {platform.logo}
                 </div>
                 
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
