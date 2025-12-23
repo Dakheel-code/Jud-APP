@@ -13,10 +13,9 @@ export default function Header() {
           <Link href="/" className="flex items-center">
             {!logoError ? (
               <img
-                src="https://jud.sa/wp-content/uploads/2025/02/ChatGPT-Image-12-%D8%B3%D8%A8%D8%AA%D9%85%D8%A8%D8%B1-2025%D8%8C-06_53_56-%D9%85.png"
+                src="/logo.gif"
                 alt="Jud Marketing & Agency"
-                className="h-16 md:h-20 w-auto object-contain rounded-lg"
-                style={{ filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1))' }}
+                className="h-16 md:h-20 w-auto object-contain"
                 onError={() => setLogoError(true)}
               />
             ) : (
