@@ -148,6 +148,7 @@ function DashboardContent() {
               <button
                 onClick={() => {
                   localStorage.removeItem('snapchat_session');
+                  localStorage.removeItem('connected_platforms');
                   window.location.href = '/';
                 }}
                 className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition"
