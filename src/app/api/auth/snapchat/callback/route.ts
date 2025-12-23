@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     }
 
     // الحصول على Ad Accounts
-    let adAccounts;
+    let adAccounts: any[] = [];
     try {
       adAccounts = await getAdAccounts(tokenData.access_token);
     } catch (e) {
@@ -54,13 +54,13 @@ export async function GET(request: NextRequest) {
     const primaryAdAccount = adAccounts.length > 0 ? adAccounts[0] : null;
 
     // إنشاء المتجر في قاعدة البيانات
-    const storeResult = await db.execute(sql`
+    const storeResult: any = await db.execute(sql`
       INSERT INTO stores (store_name, store_url)
       VALUES (${storeName}, ${storeUrl || null})
       RETURNING id
     `);
 
-    const storeId = (storeResult.rows[0] as any).id;
+    const storeId = storeResult[0]?.id || storeResult.rows?.[0]?.id;
 
     // حفظ اتصال Snapchat إذا كان هناك ad account
     if (primaryAdAccount) {
