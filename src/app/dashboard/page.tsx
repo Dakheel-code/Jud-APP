@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import { TrendingUp, DollarSign, MousePointerClick, ShoppingCart, Calendar } from 'lucide-react';
+import { TrendingUp, DollarSign, MousePointerClick, ShoppingCart } from 'lucide-react';
 
 interface InsightData {
   date: string;
@@ -32,10 +32,6 @@ function DashboardContent() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [dateRange, setDateRange] = useState({
-    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    endDate: new Date().toISOString().split('T')[0]
-  });
 
   useEffect(() => {
     const savedSession = localStorage.getItem('snapchat_session');
@@ -68,7 +64,7 @@ function DashboardContent() {
     }
 
     fetchStats();
-  }, [dateRange, selectedAdAccountId]);
+  }, [selectedAdAccountId]);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -85,8 +81,12 @@ function DashboardContent() {
         throw new Error('No ad account selected');
       }
 
+      // استخدام آخر 30 يوم كافتراضي
+      const endDate = new Date().toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
       const response = await fetch(
-        `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${accountId}&startDate=${dateRange.startDate}&endDate=${dateRange.endDate}`
+        `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${accountId}&startDate=${startDate}&endDate=${endDate}`
       );
       
       if (!response.ok) {
@@ -162,34 +162,17 @@ function DashboardContent() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center gap-4 flex-wrap">
-            <Calendar className="w-6 h-6 text-primary-600" />
-            <div className="flex items-center gap-4 flex-1">
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">من تاريخ</label>
-                <input
-                  type="date"
-                  value={dateRange.startDate}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                  className="border border-gray-300 rounded-lg px-4 py-2"
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-600 mb-1">إلى تاريخ</label>
-                <input
-                  type="date"
-                  value={dateRange.endDate}
-                  onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                  className="border border-gray-300 rounded-lg px-4 py-2"
-                />
-              </div>
-              <button
-                onClick={fetchStats}
-                className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition mt-6"
-              >
-                تحديث
-              </button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">إحصائيات آخر 30 يوم</h2>
+              <p className="text-sm text-gray-600">البيانات من Snapchat Ads</p>
             </div>
+            <button
+              onClick={fetchStats}
+              className="bg-primary-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-primary-700 transition"
+            >
+              تحديث البيانات
+            </button>
           </div>
         </div>
 
