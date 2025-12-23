@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { BarChart3, TrendingUp, FileText, Shield } from 'lucide-react';
+import { useRouter } from 'next/router';
 
 export default function HomePage() {
+  const router = useRouter();
   const [storeName, setStoreName] = useState('');
   const [storeUrl, setStoreUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -13,12 +15,10 @@ export default function HomePage() {
     setIsSubmitting(true);
     
     try {
-      const params = new URLSearchParams({
-        storeName,
-        storeUrl: storeUrl || '',
-      });
-      
-      window.location.href = `/api/auth/snapchat?${params.toString()}`;
+      if (storeName && storeUrl) {
+        // الانتقال إلى صفحة ربط المنصات
+        router.push(`/connect-platforms?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`);
+      }
     } catch (error) {
       console.error('Error:', error);
       alert('حدث خطأ، يرجى المحاولة مرة أخرى');

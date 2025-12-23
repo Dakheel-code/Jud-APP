@@ -1,0 +1,144 @@
+'use client';
+
+import { useSearchParams, useRouter } from 'next/navigation';
+import { useEffect, useState, Suspense } from 'react';
+import { ExternalLink } from 'lucide-react';
+
+function ConnectPlatformsContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const [storeName, setStoreName] = useState('');
+  const [storeUrl, setStoreUrl] = useState('');
+
+  useEffect(() => {
+    const name = searchParams.get('storeName');
+    const url = searchParams.get('storeUrl');
+    
+    if (!name || !url) {
+      router.push('/');
+      return;
+    }
+    
+    setStoreName(name);
+    setStoreUrl(url);
+  }, [searchParams, router]);
+
+  const handleSnapchatConnect = () => {
+    // الانتقال إلى OAuth Snapchat
+    const state = Buffer.from(JSON.stringify({ storeName, storeUrl })).toString('base64');
+    window.location.href = `/api/auth/snapchat?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`;
+  };
+
+  const platforms = [
+    {
+      id: 'snapchat',
+      name: 'سناب شات',
+      icon: '👻',
+      color: 'bg-yellow-400',
+      available: true,
+      onClick: handleSnapchatConnect
+    },
+    {
+      id: 'tiktok',
+      name: 'تيك توك',
+      icon: '🎵',
+      color: 'bg-black',
+      available: false
+    },
+    {
+      id: 'meta',
+      name: 'ميتا',
+      icon: '∞',
+      color: 'bg-blue-600',
+      available: false
+    },
+    {
+      id: 'google',
+      name: 'قوقل',
+      icon: 'G',
+      color: 'bg-red-500',
+      available: false
+    }
+  ];
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-xl shadow-lg p-8 max-w-4xl w-full">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            ربط حساباتك الإعلانية
+          </h1>
+          <p className="text-gray-600">
+            {storeName} - اختر المنصات التي تريد ربطها
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {platforms.map((platform) => (
+            <div
+              key={platform.id}
+              className={`relative border-2 rounded-xl p-6 transition ${
+                platform.available
+                  ? 'border-gray-200 hover:border-primary-400 cursor-pointer hover:shadow-md'
+                  : 'border-gray-100 opacity-60'
+              }`}
+              onClick={platform.available ? platform.onClick : undefined}
+            >
+              {!platform.available && (
+                <div className="absolute top-3 right-3">
+                  <span className="bg-red-100 text-red-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
+                    غير متوفر
+                  </span>
+                </div>
+              )}
+
+              <div className="flex flex-col items-center text-center">
+                <div className={`w-20 h-20 ${platform.color} rounded-full flex items-center justify-center mb-4 text-white text-4xl`}>
+                  {platform.icon}
+                </div>
+                
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  {platform.name}
+                </h3>
+
+                {platform.available ? (
+                  <button
+                    className="mt-4 w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition flex items-center justify-center gap-2"
+                  >
+                    <ExternalLink className="w-5 h-5" />
+                    ربط الحساب
+                  </button>
+                ) : (
+                  <div className="mt-4 w-full bg-gray-100 text-gray-500 px-6 py-3 rounded-lg font-semibold cursor-not-allowed">
+                    قريباً
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-8 text-center">
+          <button
+            onClick={() => router.push('/')}
+            className="text-gray-600 hover:text-gray-900 underline"
+          >
+            العودة للصفحة الرئيسية
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function ConnectPlatformsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-pulse">جاري التحميل...</div>
+      </div>
+    }>
+      <ConnectPlatformsContent />
+    </Suspense>
+  );
+}
