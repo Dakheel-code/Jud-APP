@@ -79,25 +79,46 @@ export async function getAdAccounts(accessToken: string): Promise<SnapchatAdAcco
       return [];
     }
 
-    // ثانياً: الحصول على Ad Accounts من أول Organization
-    const orgId = organizations[0].organization.id;
-    const adAccountsResponse = await axios.get(
-      `${SNAPCHAT_API_BASE}/organizations/${orgId}/adaccounts`,
-      {
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    console.log(`Found ${organizations.length} organizations`);
 
-    const adAccounts = adAccountsResponse.data.adaccounts || [];
-    
-    return adAccounts.map((acc: any) => ({
-      id: acc.adaccount.id,
-      name: acc.adaccount.name,
-      type: acc.adaccount.type,
-      status: acc.adaccount.status,
-    }));
+    // ثانياً: الحصول على Ad Accounts من جميع Organizations
+    const allAdAccounts: SnapchatAdAccount[] = [];
+
+    for (const org of organizations) {
+      const orgId = org.organization.id;
+      const orgName = org.organization.name;
+      
+      console.log(`Fetching ad accounts for organization: ${orgName} (${orgId})`);
+
+      try {
+        const adAccountsResponse = await axios.get(
+          `${SNAPCHAT_API_BASE}/organizations/${orgId}/adaccounts`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          }
+        );
+
+        const adAccounts = adAccountsResponse.data.adaccounts || [];
+        console.log(`Found ${adAccounts.length} ad accounts in ${orgName}`);
+
+        const mappedAccounts = adAccounts.map((acc: any) => ({
+          id: acc.adaccount.id,
+          name: acc.adaccount.name,
+          type: acc.adaccount.type,
+          status: acc.adaccount.status,
+        }));
+
+        allAdAccounts.push(...mappedAccounts);
+      } catch (orgError) {
+        console.error(`Error fetching ad accounts for org ${orgId}:`, orgError);
+        // استمر في جلب الحسابات من Organizations الأخرى
+      }
+    }
+
+    console.log(`Total ad accounts found: ${allAdAccounts.length}`);
+    return allAdAccounts;
   } catch (error) {
     console.error('Error fetching ad accounts:', error);
     throw error;
