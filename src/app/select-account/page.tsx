@@ -18,13 +18,12 @@ function SelectAccountContent() {
   const [storeName, setStoreName] = useState('');
 
   useEffect(() => {
-    const sessionParam = searchParams.get('session');
+    // محاولة قراءة البيانات من localStorage أولاً
+    const savedSession = localStorage.getItem('snapchat_session');
     
-    if (sessionParam) {
+    if (savedSession) {
       try {
-        // فك التشفير مع دعم UTF-8
-        const decodedData = decodeURIComponent(escape(atob(sessionParam)));
-        const sessionData = JSON.parse(decodedData);
+        const sessionData = JSON.parse(savedSession);
         setAdAccounts(sessionData.adAccounts || []);
         setStoreName(sessionData.storeName || '');
         
@@ -37,7 +36,25 @@ function SelectAccountContent() {
         router.push('/?error=invalid_session');
       }
     } else {
-      router.push('/');
+      // إذا لم تكن هناك بيانات في localStorage، حاول من URL (للتوافق مع الإصدارات القديمة)
+      const sessionParam = searchParams.get('session');
+      if (sessionParam) {
+        try {
+          const decodedData = decodeURIComponent(escape(atob(sessionParam)));
+          const sessionData = JSON.parse(decodedData);
+          setAdAccounts(sessionData.adAccounts || []);
+          setStoreName(sessionData.storeName || '');
+          
+          if (sessionData.adAccounts && sessionData.adAccounts.length > 0) {
+            setSelectedAccountId(sessionData.adAccounts[0].id);
+          }
+        } catch (err) {
+          console.error('Failed to parse session:', err);
+          router.push('/?error=invalid_session');
+        }
+      } else {
+        router.push('/');
+      }
     }
   }, [searchParams, router]);
 
@@ -47,14 +64,13 @@ function SelectAccountContent() {
       return;
     }
 
-    const sessionParam = searchParams.get('session');
-    if (sessionParam) {
-      // فك التشفير مع دعم UTF-8
-      const decodedData = decodeURIComponent(escape(atob(sessionParam)));
-      const sessionData = JSON.parse(decodedData);
+    // قراءة البيانات من localStorage
+    const savedSession = localStorage.getItem('snapchat_session');
+    if (savedSession) {
+      const sessionData = JSON.parse(savedSession);
       sessionData.selectedAdAccountId = selectedAccountId;
       
-      // حفظ بيانات الجلسة
+      // حفظ بيانات الجلسة المحدثة
       localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
       
       // تحديث قائمة المنصات المتصلة

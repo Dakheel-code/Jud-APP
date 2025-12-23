@@ -44,13 +44,61 @@ export async function GET(request: NextRequest) {
       expiresAt: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
     };
 
-    // تشفير البيانات وإرسالها كـ query parameter مع UTF-8
-    const encodedSession = Buffer.from(JSON.stringify(sessionData), 'utf8').toString('base64');
+    // حفظ البيانات في HTML response مع script لحفظها في localStorage
+    const html = `
+      <!DOCTYPE html>
+      <html lang="ar" dir="rtl">
+      <head>
+        <meta charset="UTF-8">
+        <title>جاري التحميل...</title>
+        <style>
+          body {
+            font-family: 'Cairo', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+          }
+          .loader {
+            text-align: center;
+          }
+          .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="loader">
+          <div class="spinner"></div>
+          <p>جاري تحميل حساباتك الإعلانية...</p>
+        </div>
+        <script>
+          const sessionData = ${JSON.stringify(sessionData)};
+          localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
+          window.location.href = '/select-account';
+        </script>
+      </body>
+      </html>
+    `;
 
-    // التوجيه إلى صفحة اختيار الحساب الإعلاني
-    return NextResponse.redirect(
-      new URL(`/select-account?session=${encodedSession}`, request.url)
-    );
+    return new NextResponse(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+      },
+    });
   } catch (error) {
     console.error('Snapchat OAuth error:', error);
     return NextResponse.redirect(
