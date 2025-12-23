@@ -136,6 +136,8 @@ export async function getAdAccountStats(
     const startDateTime = `${startDate}T00:00:00.000Z`;
     const endDateTime = `${endDate}T23:59:59.999Z`;
 
+    console.log(`Fetching stats for account ${adAccountId} from ${startDateTime} to ${endDateTime}`);
+
     const response = await axios.get(
       `${SNAPCHAT_API_BASE}/adaccounts/${adAccountId}/stats`,
       {
@@ -153,16 +155,31 @@ export async function getAdAccountStats(
       }
     );
 
+    console.log('Snapchat API Response:', JSON.stringify(response.data, null, 2));
+
     const stats = response.data.timeseries_stats || [];
     
     // إذا لم تكن هناك بيانات، أرجع مصفوفة فارغة
     if (stats.length === 0) {
-      console.log('No stats data returned from Snapchat API');
-      return [];
+      console.log('No stats data returned from Snapchat API - this may be normal if there are no campaigns or no data in the date range');
+      
+      // إرجاع صف واحد بأصفار لعرض الجدول
+      return [
+        {
+          date: startDate,
+          spend: 0,
+          impressions: 0,
+          swipes: 0,
+          purchases: 0,
+          purchase_value: 0,
+        }
+      ];
     }
     
-    return stats.map((stat: any) => {
+    const mappedStats = stats.map((stat: any) => {
       const statData = stat.stats || {};
+      console.log(`Processing stat for ${stat.start_time}:`, statData);
+      
       return {
         date: stat.start_time ? stat.start_time.split('T')[0] : startDate,
         spend: statData.spend ? parseFloat(statData.spend) / 1000000 : 0,
@@ -172,19 +189,16 @@ export async function getAdAccountStats(
         purchase_value: statData.conversion_purchases_value ? parseFloat(statData.conversion_purchases_value) / 1000000 : 0,
       };
     });
+
+    console.log(`Returning ${mappedStats.length} stats records`);
+    return mappedStats;
   } catch (error: any) {
-    console.error('Error fetching Snapchat stats:', error.response?.data || error.message);
+    console.error('Error fetching Snapchat stats:');
+    console.error('Error message:', error.message);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
     
-    // إرجاع بيانات تجريبية للاختبار
-    return [
-      {
-        date: startDate,
-        spend: 0,
-        impressions: 0,
-        swipes: 0,
-        purchases: 0,
-        purchase_value: 0,
-      }
-    ];
+    // إرجاع بيانات فارغة مع رسالة خطأ
+    throw new Error(`Failed to fetch stats: ${error.response?.data?.error?.message || error.message}`);
   }
 }
