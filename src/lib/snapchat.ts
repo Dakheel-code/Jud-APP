@@ -65,13 +65,43 @@ export async function refreshAccessToken(refreshToken: string): Promise<Snapchat
 }
 
 export async function getAdAccounts(accessToken: string): Promise<SnapchatAdAccount[]> {
-  const response = await axios.get(`${SNAPCHAT_API_BASE}/me/adaccounts`, {
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
-  });
+  try {
+    // أولاً: الحصول على Organizations
+    const orgsResponse = await axios.get(`${SNAPCHAT_API_BASE}/me/organizations`, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
 
-  return response.data.adaccounts || [];
+    const organizations = orgsResponse.data.organizations || [];
+    
+    if (organizations.length === 0) {
+      return [];
+    }
+
+    // ثانياً: الحصول على Ad Accounts من أول Organization
+    const orgId = organizations[0].organization.id;
+    const adAccountsResponse = await axios.get(
+      `${SNAPCHAT_API_BASE}/organizations/${orgId}/adaccounts`,
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      }
+    );
+
+    const adAccounts = adAccountsResponse.data.adaccounts || [];
+    
+    return adAccounts.map((acc: any) => ({
+      id: acc.adaccount.id,
+      name: acc.adaccount.name,
+      type: acc.adaccount.type,
+      status: acc.adaccount.status,
+    }));
+  } catch (error) {
+    console.error('Error fetching ad accounts:', error);
+    throw error;
+  }
 }
 
 export async function getAdAccountStats(
