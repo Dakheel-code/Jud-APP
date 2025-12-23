@@ -26,13 +26,6 @@ function SelectAccountContent() {
         setAdAccounts(sessionData.adAccounts || []);
         setStoreName(sessionData.storeName || '');
         
-        // إذا كان هناك حساب واحد فقط، انتقل مباشرة للـ dashboard
-        if (sessionData.adAccounts && sessionData.adAccounts.length === 1) {
-          localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
-          router.push('/dashboard');
-          return;
-        }
-        
         // اختر الحساب الأول افتراضياً
         if (sessionData.adAccounts && sessionData.adAccounts.length > 0) {
           setSelectedAccountId(sessionData.adAccounts[0].id);
