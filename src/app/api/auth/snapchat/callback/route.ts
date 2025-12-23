@@ -73,9 +73,9 @@ export async function GET(request: NextRequest) {
       `);
     }
 
-    // التوجيه إلى صفحة نجاح بسيطة
+    // التوجيه إلى Dashboard مع معرف المتجر
     return NextResponse.redirect(
-      new URL(`/success?store=${encodeURIComponent(storeName)}`, request.url)
+      new URL(`/dashboard?storeId=${storeId}&store=${encodeURIComponent(storeName)}`, request.url)
     );
   } catch (error) {
     console.error('Snapchat OAuth error:', error);
