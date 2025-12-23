@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   try {
     // فك تشفير بيانات المتجر من state
-    const storeData = JSON.parse(Buffer.from(state, 'base64').toString());
+    const storeData = JSON.parse(Buffer.from(state, 'base64').toString('utf8'));
     const { storeName, storeUrl } = storeData;
 
     // تبديل code بـ access token
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
       expiresAt: new Date(Date.now() + tokenData.expires_in * 1000).toISOString()
     };
 
-    // تشفير البيانات وإرسالها كـ query parameter
-    const encodedSession = Buffer.from(JSON.stringify(sessionData)).toString('base64');
+    // تشفير البيانات وإرسالها كـ query parameter مع UTF-8
+    const encodedSession = Buffer.from(JSON.stringify(sessionData), 'utf8').toString('base64');
 
     // التوجيه إلى صفحة اختيار الحساب الإعلاني
     return NextResponse.redirect(

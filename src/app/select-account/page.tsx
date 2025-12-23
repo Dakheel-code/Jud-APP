@@ -22,7 +22,9 @@ function SelectAccountContent() {
     
     if (sessionParam) {
       try {
-        const sessionData = JSON.parse(atob(sessionParam));
+        // فك التشفير مع دعم UTF-8
+        const decodedData = decodeURIComponent(escape(atob(sessionParam)));
+        const sessionData = JSON.parse(decodedData);
         setAdAccounts(sessionData.adAccounts || []);
         setStoreName(sessionData.storeName || '');
         
@@ -47,7 +49,9 @@ function SelectAccountContent() {
 
     const sessionParam = searchParams.get('session');
     if (sessionParam) {
-      const sessionData = JSON.parse(atob(sessionParam));
+      // فك التشفير مع دعم UTF-8
+      const decodedData = decodeURIComponent(escape(atob(sessionParam)));
+      const sessionData = JSON.parse(decodedData);
       sessionData.selectedAdAccountId = selectedAccountId;
       
       // حفظ بيانات الجلسة
