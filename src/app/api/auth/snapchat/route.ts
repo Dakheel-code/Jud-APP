@@ -1,20 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { db } from '@/db';
+import { stores } from '@/db/schema';
 
 export async function GET(request: NextRequest) {
-  const session = await getSession();
+  const searchParams = request.nextUrl.searchParams;
+  const storeName = searchParams.get('storeName');
+  const storeUrl = searchParams.get('storeUrl');
 
-  if (!session) {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
+  if (!storeName) {
+    return NextResponse.redirect(new URL('/?error=missing_store_info', request.url));
   }
 
-  const clientId = process.env.SNAPCHAT_CLIENT_ID;
-  const redirectUri = process.env.SNAPCHAT_REDIRECT_URI;
-  const scope = 'snapchat-marketing-api';
+  try {
+    const [store] = await db.insert(stores).values({
+      storeName: storeName,
+      storeUrl: storeUrl || null,
+    }).returning();
 
-  const authUrl = `https://accounts.snapchat.com/login/oauth2/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(
-    redirectUri!
-  )}&response_type=code&scope=${scope}&state=${session.storeId}`;
+    const snapchatAuthUrl = new URL('https://accounts.snapchat.com/login/oauth2/authorize');
+    snapchatAuthUrl.searchParams.set('client_id', process.env.SNAPCHAT_CLIENT_ID!);
+    snapchatAuthUrl.searchParams.set('redirect_uri', process.env.SNAPCHAT_REDIRECT_URI!);
+    snapchatAuthUrl.searchParams.set('response_type', 'code');
+    snapchatAuthUrl.searchParams.set('scope', 'snapchat-marketing-api');
+    snapchatAuthUrl.searchParams.set('state', store.id);
 
-  return NextResponse.redirect(authUrl);
+    return NextResponse.redirect(snapchatAuthUrl.toString());
+  } catch (error) {
+    console.error('Error creating store:', error);
+    return NextResponse.redirect(new URL('/?error=store_creation_failed', request.url));
+  }
 }

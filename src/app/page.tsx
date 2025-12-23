@@ -12,14 +12,18 @@ export default function HomePage() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // هنا يمكن إضافة منطق حفظ البيانات أو الانتقال للخطوة التالية
-    console.log({ storeName, storeUrl });
-    
-    // محاكاة عملية الإرسال
-    setTimeout(() => {
-      alert('تم حفظ بيانات المتجر بنجاح!');
+    try {
+      const params = new URLSearchParams({
+        storeName,
+        storeUrl: storeUrl || '',
+      });
+      
+      window.location.href = `/api/auth/snapchat?${params.toString()}`;
+    } catch (error) {
+      console.error('Error:', error);
+      alert('حدث خطأ، يرجى المحاولة مرة أخرى');
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   return (
