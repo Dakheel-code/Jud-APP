@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface AdAccount {
   id: string;
@@ -16,6 +16,9 @@ function SelectAccountContent() {
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
   const [selectedAccountId, setSelectedAccountId] = useState<string>('');
   const [storeName, setStoreName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const accountsPerPage = 10;
 
   useEffect(() => {
     // محاولة قراءة البيانات من localStorage أولاً
@@ -93,6 +96,26 @@ function SelectAccountContent() {
     );
   }
 
+  // تصفية الحسابات بناءً على البحث
+  const filteredAccounts = adAccounts.filter(account => 
+    account.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    account.id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // حساب عدد الصفحات
+  const totalPages = Math.ceil(filteredAccounts.length / accountsPerPage);
+  
+  // الحسابات المعروضة في الصفحة الحالية
+  const startIndex = (currentPage - 1) * accountsPerPage;
+  const endIndex = startIndex + accountsPerPage;
+  const displayedAccounts = filteredAccounts.slice(startIndex, endIndex);
+
+  // إعادة تعيين الصفحة عند البحث
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg p-8 max-w-2xl w-full">
@@ -106,10 +129,34 @@ function SelectAccountContent() {
           <p className="text-gray-600">
             {storeName} - اختر الحساب الإعلاني الذي تريد عرض بياناته
           </p>
+          <p className="text-sm text-gray-500 mt-2">
+            إجمالي الحسابات: {adAccounts.length}
+          </p>
         </div>
 
-        <div className="space-y-4 mb-8">
-          {adAccounts.map((account) => (
+        {/* حقل البحث */}
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="ابحث عن حساب بالاسم أو ID..."
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="w-full pr-10 pl-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
+          </div>
+          {searchQuery && (
+            <p className="text-sm text-gray-600 mt-2">
+              النتائج: {filteredAccounts.length} من {adAccounts.length}
+            </p>
+          )}
+        </div>
+
+        {/* قائمة الحسابات */}
+        <div className="space-y-4 mb-6">
+          {displayedAccounts.length > 0 ? (
+            displayedAccounts.map((account) => (
             <label
               key={account.id}
               className={`block p-4 border-2 rounded-lg cursor-pointer transition ${
@@ -142,8 +189,42 @@ function SelectAccountContent() {
                 </span>
               </div>
             </label>
-          ))}
+          ))
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              لا توجد نتائج للبحث "{searchQuery}"
+            </div>
+          )}
         </div>
+
+        {/* أزرار التنقل بين الصفحات */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between mb-6 pb-6 border-b">
+            <button
+              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              <ChevronRight className="w-5 h-5" />
+              السابق
+            </button>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">
+                صفحة {currentPage} من {totalPages}
+              </span>
+            </div>
+            
+            <button
+              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              التالي
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          </div>
+        )}
 
         <button
           onClick={handleContinue}
