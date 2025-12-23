@@ -16,6 +16,7 @@ export default function Header() {
                 src="/logo.gif"
                 alt="Jud Marketing & Agency"
                 className="h-16 md:h-20 w-auto object-contain"
+                style={{ filter: 'brightness(0) invert(1)' }}
                 onError={() => setLogoError(true)}
               />
             ) : (
