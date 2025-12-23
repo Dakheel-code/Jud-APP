@@ -150,8 +150,8 @@ export async function getAdAccountStats(
           start_time: startDateTime,
           end_time: endDateTime,
           fields: 'spend,impressions,swipes,conversion_purchases,conversion_purchases_value',
-          swipe_up_attribution_window: '28_DAY',
-          view_attribution_window: '7_DAY',
+          swipe_up_attribution_window: '7_DAY',
+          view_attribution_window: '1_DAY',
         },
         timeout: 30000, // 30 seconds timeout
       }
@@ -160,11 +160,31 @@ export async function getAdAccountStats(
     console.log('Snapchat API Response status:', response.status);
     console.log('Snapchat API Response data:', JSON.stringify(response.data, null, 2));
 
-    const stats = response.data.timeseries_stats || [];
+    // التحقق من وجود البيانات في الاستجابة
+    const responseData = response.data;
+    
+    if (!responseData || !responseData.timeseries_stats || responseData.timeseries_stats.length === 0) {
+      console.log('No timeseries_stats in response');
+      console.log('Full response:', JSON.stringify(responseData, null, 2));
+    }
+    
+    const stats = responseData.timeseries_stats || [];
+    
+    // إذا كانت هناك بيانات، استخرج timeseries من كل stat
+    let allTimeseries: any[] = [];
+    if (stats.length > 0) {
+      stats.forEach((stat: any) => {
+        if (stat.timeseries_stat && stat.timeseries_stat.timeseries) {
+          allTimeseries = allTimeseries.concat(stat.timeseries_stat.timeseries);
+        }
+      });
+    }
+    
+    console.log(`Found ${allTimeseries.length} timeseries records`);
     
     // إذا لم تكن هناك بيانات، أرجع مصفوفة فارغة
-    if (stats.length === 0) {
-      console.log('No stats data returned from Snapchat API - this may be normal if there are no campaigns or no data in the date range');
+    if (allTimeseries.length === 0) {
+      console.log('No timeseries data returned from Snapchat API - this may be normal if there are no campaigns or no data in the date range');
       
       // إرجاع صف واحد بأصفار لعرض الجدول
       return [
@@ -179,12 +199,12 @@ export async function getAdAccountStats(
       ];
     }
     
-    const mappedStats = stats.map((stat: any) => {
-      const statData = stat.stats || {};
-      console.log(`Processing stat for ${stat.start_time}:`, statData);
+    const mappedStats = allTimeseries.map((timeseriesItem: any) => {
+      const statData = timeseriesItem.stats || {};
+      console.log(`Processing stat for ${timeseriesItem.start_time}:`, statData);
       
       return {
-        date: stat.start_time ? stat.start_time.split('T')[0] : startDate,
+        date: timeseriesItem.start_time ? timeseriesItem.start_time.split('T')[0] : startDate,
         spend: statData.spend ? parseFloat(statData.spend) / 1000000 : 0,
         impressions: statData.impressions ? parseInt(statData.impressions) : 0,
         swipes: statData.swipes ? parseInt(statData.swipes) : 0,
