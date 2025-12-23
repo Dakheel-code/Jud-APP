@@ -3,6 +3,7 @@ import { db } from '@/db';
 import { stores, snapConnections } from '@/db/schema';
 import { exchangeCodeForToken, getAdAccounts } from '@/lib/snapchat';
 import { encrypt } from '@/lib/encryption';
+import { sql } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
@@ -16,6 +17,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    // فك تشفير بيانات المتجر من state
+    const stateData = JSON.parse(Buffer.from(state, 'base64').toString());
+    const { storeName, storeUrl } = stateData;
+
     const tokenData = await exchangeCodeForToken(code);
     const adAccounts = await getAdAccounts(tokenData.access_token);
 
@@ -27,20 +32,26 @@ export async function GET(request: NextRequest) {
 
     const primaryAdAccount = adAccounts[0];
 
+    // إنشاء المتجر في قاعدة البيانات
+    const [store] = await db.execute(sql`
+      INSERT INTO stores (store_name, store_url)
+      VALUES (${storeName}, ${storeUrl || null})
+      RETURNING id
+    `);
+
+    const storeId = (store as any).id;
+
     const expiresAt = new Date();
     expiresAt.setSeconds(expiresAt.getSeconds() + tokenData.expires_in);
 
-    await db.insert(snapConnections).values({
-      storeId: state,
-      adAccountId: primaryAdAccount.id,
-      accessToken: encrypt(tokenData.access_token),
-      refreshToken: encrypt(tokenData.refresh_token),
-      tokenExpiresAt: expiresAt,
-      isActive: true,
-    });
+    // حفظ اتصال Snapchat
+    await db.execute(sql`
+      INSERT INTO snap_connections (store_id, ad_account_id, access_token, refresh_token, token_expires_at, is_active)
+      VALUES (${storeId}, ${primaryAdAccount.id}, ${encrypt(tokenData.access_token)}, ${encrypt(tokenData.refresh_token)}, ${expiresAt}, ${true})
+    `);
 
     return NextResponse.redirect(
-      new URL(`/dashboard/${state}?success=snapchat_connected`, request.url)
+      new URL(`/dashboard/${storeId}?success=snapchat_connected`, request.url)
     );
   } catch (error) {
     console.error('Snapchat OAuth error:', error);
