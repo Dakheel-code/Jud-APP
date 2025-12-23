@@ -29,9 +29,11 @@ function ConnectPlatformsContent() {
   }, [searchParams, router]);
 
   const handleSnapchatConnect = () => {
-    // الانتقال إلى OAuth Snapchat
-    const state = Buffer.from(JSON.stringify({ storeName, storeUrl })).toString('base64');
     window.location.href = `/api/auth/snapchat?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`;
+  };
+
+  const handleTikTokConnect = () => {
+    window.location.href = `/api/auth/tiktok?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`;
   };
 
   const platforms = [
@@ -52,7 +54,8 @@ function ConnectPlatformsContent() {
         </svg>
       ),
       color: 'bg-black',
-      available: false
+      available: true,
+      onClick: handleTikTokConnect
     },
     {
       id: 'meta',
