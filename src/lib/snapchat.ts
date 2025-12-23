@@ -160,6 +160,16 @@ export async function getAdAccountStats(
     console.log('Snapchat API Response status:', response.status);
     console.log('Snapchat API Response data:', JSON.stringify(response.data, null, 2));
 
+    // التحقق من وجود البيانات في الاستجابة
+    const responseData = response.data;
+    
+    // التحقق من request_status في الاستجابة
+    if (responseData.request_status === 'error' || responseData.request_status === 'ERROR') {
+      const errorMsg = responseData.error?.message || responseData.error_description || 'خطأ في الطلب';
+      console.error('Snapchat API returned error status:', errorMsg);
+      throw new Error(`خطأ من Snapchat: ${errorMsg}`);
+    }
+
     // التحقق من أخطاء API
     if (response.status === 401 || response.status === 403) {
       throw new Error('انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى');
@@ -170,17 +180,14 @@ export async function getAdAccountStats(
     }
     
     if (response.status === 400) {
-      const errorMsg = response.data?.error?.message || response.data?.error_description || 'خطأ في البارامترات المرسلة';
+      const errorMsg = responseData?.error?.message || responseData?.error_description || 'خطأ في البارامترات المرسلة';
       throw new Error(`خطأ في الطلب: ${errorMsg}`);
     }
 
     if (response.status >= 400) {
-      const errorMsg = response.data?.error?.message || response.data?.error_description || 'خطأ غير معروف';
+      const errorMsg = responseData?.error?.message || responseData?.error_description || 'خطأ غير معروف';
       throw new Error(`خطأ من Snapchat API (${response.status}): ${errorMsg}`);
     }
-
-    // التحقق من وجود البيانات في الاستجابة
-    const responseData = response.data;
     
     if (!responseData || !responseData.timeseries_stats || responseData.timeseries_stats.length === 0) {
       console.log('No timeseries_stats in response');
@@ -193,6 +200,12 @@ export async function getAdAccountStats(
     let allTimeseries: any[] = [];
     if (stats.length > 0) {
       stats.forEach((stat: any) => {
+        // التحقق من sub_request_status
+        if (stat.sub_request_status === 'error' || stat.sub_request_status === 'ERROR') {
+          console.error('Sub-request error:', stat.error);
+          return; // تخطي هذا الـ stat
+        }
+        
         if (stat.timeseries_stat && stat.timeseries_stat.timeseries) {
           allTimeseries = allTimeseries.concat(stat.timeseries_stat.timeseries);
         }
