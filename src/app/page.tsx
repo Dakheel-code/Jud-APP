@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { BarChart3, TrendingUp, FileText, Shield } from 'lucide-react';
 import { useRouter } from 'next/router';
 
 export default function HomePage() {
@@ -17,7 +16,7 @@ export default function HomePage() {
     try {
       if (storeName && storeUrl) {
         // الانتقال إلى صفحة ربط المنصات
-        router.push(`/connect-platforms?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`);
+        window.location.href = `/connect-platforms?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`;
       }
     } catch (error) {
       console.error('Error:', error);
@@ -83,102 +82,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          <FeatureCard
-            icon={<BarChart3 className="w-12 h-12 text-primary-600" />}
-            title="تحليل شامل"
-            description="احصل على تحليل مفصل لأداء حملاتك الإعلانية"
-          />
-          <FeatureCard
-            icon={<TrendingUp className="w-12 h-12 text-primary-600" />}
-            title="توقعات ذكية"
-            description="توقع المبيعات والإيرادات بناءً على البيانات التاريخية"
-          />
-          <FeatureCard
-            icon={<FileText className="w-12 h-12 text-primary-600" />}
-            title="تقارير احترافية"
-            description="صدّر تقارير PDF عربية بهوية متجرك"
-          />
-          <FeatureCard
-            icon={<Shield className="w-12 h-12 text-primary-600" />}
-            title="أمان وخصوصية"
-            description="بياناتك محمية بأعلى معايير الأمان"
-          />
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-6 text-center">
-            كيف تعمل المنصة؟
-          </h2>
-          <div className="space-y-6">
-            <Step
-              number="1"
-              title="ربط حساب Snapchat Ads"
-              description="اربط حسابك الإعلاني بأمان عبر OAuth"
-            />
-            <Step
-              number="2"
-              title="مزامنة البيانات"
-              description="سيتم سحب بيانات حملاتك تلقائياً"
-            />
-            <Step
-              number="3"
-              title="تحليل الأداء"
-              description="شاهد تحليلات مفصلة لجميع المؤشرات"
-            />
-            <Step
-              number="4"
-              title="توقع المبيعات"
-              description="احصل على توقعات ذكية للمشتريات والإيرادات"
-            />
-            <Step
-              number="5"
-              title="تصدير التقارير"
-              description="صدّر تقارير PDF احترافية بهوية متجرك"
-            />
-          </div>
-        </div>
       </div>
     </div>
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  description,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition">
-      <div className="mb-4">{icon}</div>
-      <h3 className="text-xl font-bold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-function Step({
-  number,
-  title,
-  description,
-}: {
-  number: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex gap-4 items-start">
-      <div className="flex-shrink-0 w-12 h-12 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-xl">
-        {number}
-      </div>
-      <div>
-        <h4 className="text-lg font-bold text-gray-900 mb-1">{title}</h4>
-        <p className="text-gray-600">{description}</p>
-      </div>
-    </div>
-  );
-}
