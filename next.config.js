@@ -9,6 +9,10 @@ const nextConfig = {
       bodySizeLimit: '2mb',
     },
   },
+  i18n: {
+    locales: ['ar'],
+    defaultLocale: 'ar',
+  },
 }
 
 module.exports = nextConfig
