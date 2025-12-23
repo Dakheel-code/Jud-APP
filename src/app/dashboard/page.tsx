@@ -81,9 +81,9 @@ function DashboardContent() {
         throw new Error('No ad account selected');
       }
 
-      // استخدام آخر 30 يوم كافتراضي
+      // استخدام آخر 90 يوم كافتراضي
       const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       
       const response = await fetch(
         `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${accountId}&startDate=${startDate}&endDate=${endDate}`
@@ -164,7 +164,7 @@ function DashboardContent() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">إحصائيات آخر 30 يوم</h2>
+              <h2 className="text-xl font-bold text-gray-900">إحصائيات آخر 90 يوم</h2>
               <p className="text-sm text-gray-600">البيانات من Snapchat Ads</p>
             </div>
             <button
