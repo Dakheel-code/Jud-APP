@@ -9,6 +9,7 @@ function ConnectPlatformsContent() {
   const router = useRouter();
   const [storeName, setStoreName] = useState('');
   const [storeUrl, setStoreUrl] = useState('');
+  const [connectedPlatforms, setConnectedPlatforms] = useState<string[]>([]);
 
   useEffect(() => {
     const name = searchParams.get('storeName');
@@ -21,6 +22,10 @@ function ConnectPlatformsContent() {
     
     setStoreName(name);
     setStoreUrl(url);
+    
+    // تحميل المنصات المتصلة
+    const connected = JSON.parse(localStorage.getItem('connected_platforms') || '[]');
+    setConnectedPlatforms(connected);
   }, [searchParams, router]);
 
   const handleSnapchatConnect = () => {
@@ -105,7 +110,14 @@ function ConnectPlatformsContent() {
                   {platform.name}
                 </h3>
 
-                {platform.available ? (
+                {connectedPlatforms.includes(platform.id) ? (
+                  <div className="mt-4 w-full bg-green-100 text-green-800 px-6 py-3 rounded-lg font-semibold flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                    </svg>
+                    تم الربط
+                  </div>
+                ) : platform.available ? (
                   <button
                     className="mt-4 w-full bg-primary-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-primary-700 transition flex items-center justify-center gap-2"
                   >
@@ -122,7 +134,18 @@ function ConnectPlatformsContent() {
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        {connectedPlatforms.length > 0 && (
+          <div className="mt-8 text-center">
+            <button
+              onClick={() => router.push('/dashboard')}
+              className="bg-gradient-to-r from-purple-900 via-purple-800 to-blue-900 text-white px-8 py-3 rounded-xl font-bold hover:opacity-90 transition"
+            >
+              المواصلة إلى لوحة التحكم
+            </button>
+          </div>
+        )}
+
+        <div className="mt-4 text-center">
           <button
             onClick={() => router.push('/')}
             className="text-gray-600 hover:text-gray-900 underline"

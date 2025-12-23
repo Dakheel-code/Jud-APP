@@ -49,8 +49,19 @@ function SelectAccountContent() {
     if (sessionParam) {
       const sessionData = JSON.parse(atob(sessionParam));
       sessionData.selectedAdAccountId = selectedAccountId;
+      
+      // حفظ بيانات الجلسة
       localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
-      router.push('/dashboard');
+      
+      // تحديث قائمة المنصات المتصلة
+      const connectedPlatforms = JSON.parse(localStorage.getItem('connected_platforms') || '[]');
+      if (!connectedPlatforms.includes('snapchat')) {
+        connectedPlatforms.push('snapchat');
+        localStorage.setItem('connected_platforms', JSON.stringify(connectedPlatforms));
+      }
+      
+      // العودة لصفحة ربط المنصات
+      router.push(`/connect-platforms?storeName=${encodeURIComponent(sessionData.storeName)}&storeUrl=${encodeURIComponent(sessionData.storeUrl)}`);
     }
   };
 
