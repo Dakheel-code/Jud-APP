@@ -138,36 +138,28 @@ function DashboardContent() {
               <h1 className="text-2xl font-bold text-gray-900">{storeName}</h1>
               <p className="text-sm text-gray-600">لوحة التحكم</p>
             </div>
-            <a
-              href="/"
-              className="text-gray-600 hover:text-gray-900 px-4 py-2"
-            >
-              الصفحة الرئيسية
-            </a>
+            <div className="flex gap-4">
+              <a
+                href="/"
+                className="text-gray-600 hover:text-gray-900 px-4 py-2"
+              >
+                الصفحة الرئيسية
+              </a>
+              <button
+                onClick={() => {
+                  localStorage.removeItem('snapchat_session');
+                  window.location.href = '/';
+                }}
+                className="bg-red-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-red-700 transition"
+              >
+                تسجيل الخروج
+              </button>
+            </div>
           </div>
         </div>
       </nav>
 
       <div className="container mx-auto px-4 py-8">
-        {adAccounts.length > 1 && (
-          <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <div className="flex items-center gap-4">
-              <label className="text-sm font-semibold text-gray-700">اختر الحساب الإعلاني:</label>
-              <select
-                value={selectedAdAccountId}
-                onChange={(e) => handleAdAccountChange(e.target.value)}
-                className="border border-gray-300 rounded-lg px-4 py-2 flex-1 max-w-md"
-              >
-                {adAccounts.map((account) => (
-                  <option key={account.id} value={account.id}>
-                    {account.name} ({account.status})
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        )}
-
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center gap-4 flex-wrap">
             <Calendar className="w-6 h-6 text-primary-600" />

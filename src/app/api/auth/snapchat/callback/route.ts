@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
     // تشفير البيانات وإرسالها كـ query parameter
     const encodedSession = Buffer.from(JSON.stringify(sessionData)).toString('base64');
 
-    // التوجيه إلى Dashboard مع البيانات
+    // التوجيه إلى صفحة اختيار الحساب الإعلاني
     return NextResponse.redirect(
-      new URL(`/dashboard?session=${encodedSession}`, request.url)
+      new URL(`/select-account?session=${encodedSession}`, request.url)
     );
   } catch (error) {
     console.error('Snapchat OAuth error:', error);
