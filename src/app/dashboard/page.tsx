@@ -2,6 +2,7 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
+import type { ReactNode } from 'react';
 import { TrendingUp, DollarSign, MousePointerClick, ShoppingCart } from 'lucide-react';
 
 interface InsightData {
@@ -23,6 +24,8 @@ interface StatsData {
   insights: InsightData[];
 }
 
+type DateRange = { startDate: string; endDate: string };
+
 function DashboardContent() {
   const searchParams = useSearchParams();
   
@@ -32,6 +35,10 @@ function DashboardContent() {
   const [stats, setStats] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const defaultEndDate = new Date().toISOString().split('T')[0];
+  const defaultStartDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const [ranges, setRanges] = useState<DateRange[]>([{ startDate: defaultStartDate, endDate: defaultEndDate }]);
 
   useEffect(() => {
     const savedSession = localStorage.getItem('snapchat_session');
@@ -81,23 +88,49 @@ function DashboardContent() {
         throw new Error('No ad account selected');
       }
 
-      // استخدام آخر 90 يوم كافتراضي
-      const endDate = new Date().toISOString().split('T')[0];
-      const startDate = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      
-      const response = await fetch(
-        `/api/insights?accessToken=${sessionData.accessToken}&adAccountId=${accountId}&startDate=${startDate}&endDate=${endDate}`
-      );
+      const validRanges = ranges
+        .filter((r) => r.startDate && r.endDate)
+        .map((r) => ({
+          startDate: r.startDate,
+          endDate: r.endDate,
+        }));
+
+      if (validRanges.length === 0) {
+        throw new Error('يرجى اختيار فترة زمنية واحدة على الأقل');
+      }
+
+      const response = await fetch('/api/insights', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          accessToken: sessionData.accessToken,
+          refreshToken: sessionData.refreshToken,
+          adAccountId: accountId,
+          ranges: validRanges,
+        }),
+      });
       
       if (!response.ok) {
-        throw new Error('فشل في جلب البيانات');
+        const errBody = await response.json().catch(() => null);
+        const serverMessage = errBody?.message || errBody?.error;
+        throw new Error(serverMessage || `فشل في جلب البيانات (${response.status})`);
       }
       
       const data = await response.json();
+
+      if (data?.refreshedTokens?.accessToken) {
+        sessionData.accessToken = data.refreshedTokens.accessToken;
+        sessionData.refreshToken = data.refreshedTokens.refreshToken;
+        sessionData.expiresAt = data.refreshedTokens.expiresAt;
+        localStorage.setItem('snapchat_session', JSON.stringify(sessionData));
+      }
+
       setStats(data);
       setError(null);
-    } catch (err) {
-      setError('حدث خطأ في جلب البيانات');
+    } catch (err: any) {
+      setError(err?.message || 'حدث خطأ في جلب البيانات');
       console.error(err);
     } finally {
       setLoading(false);
@@ -164,7 +197,7 @@ function DashboardContent() {
         <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-gray-900">إحصائيات آخر 90 يوم</h2>
+              <h2 className="text-xl font-bold text-gray-900">إحصائيات Snapchat</h2>
               <p className="text-sm text-gray-600">البيانات من Snapchat Ads</p>
             </div>
             <button
@@ -173,6 +206,62 @@ function DashboardContent() {
             >
               تحديث البيانات
             </button>
+          </div>
+
+          <div className="mt-6 border-t pt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-900">الفترات الزمنية</h3>
+              <button
+                type="button"
+                onClick={() => setRanges((prev) => [...prev, { startDate: defaultStartDate, endDate: defaultEndDate }])}
+                className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-50 transition text-sm"
+              >
+                إضافة فترة
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {ranges.map((r, idx) => (
+                <div key={idx} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                  <div className="md:col-span-5">
+                    <label className="block text-sm text-gray-600 mb-1">من</label>
+                    <input
+                      type="date"
+                      value={r.startDate}
+                      onChange={(e) =>
+                        setRanges((prev) =>
+                          prev.map((x, i) => (i === idx ? { ...x, startDate: e.target.value } : x))
+                        )
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="md:col-span-5">
+                    <label className="block text-sm text-gray-600 mb-1">إلى</label>
+                    <input
+                      type="date"
+                      value={r.endDate}
+                      onChange={(e) =>
+                        setRanges((prev) =>
+                          prev.map((x, i) => (i === idx ? { ...x, endDate: e.target.value } : x))
+                        )
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div className="md:col-span-2 flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRanges((prev) => prev.filter((_, i) => i !== idx))}
+                      disabled={ranges.length === 1}
+                      className="w-full px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition text-sm"
+                    >
+                      حذف
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -273,7 +362,7 @@ function StatCard({
   value,
   subtitle,
 }: {
-  icon: React.ReactNode;
+  icon: ReactNode;
   title: string;
   value: string;
   subtitle: string;
