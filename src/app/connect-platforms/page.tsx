@@ -36,6 +36,10 @@ function ConnectPlatformsContent() {
     window.location.href = `/api/auth/tiktok?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`;
   };
 
+  const handleMetaConnect = () => {
+    window.location.href = `/api/auth/meta?storeName=${encodeURIComponent(storeName)}&storeUrl=${encodeURIComponent(storeUrl)}`;
+  };
+
   const platforms = [
     {
       id: 'snapchat',
@@ -60,9 +64,10 @@ function ConnectPlatformsContent() {
     {
       id: 'meta',
       name: 'ميتا',
-      logo: <span className="text-5xl font-bold">f</span>,
+      logo: <span className="text-5xl font-bold text-white">f</span>,
       color: 'bg-blue-600',
-      available: false
+      available: true,
+      onClick: handleMetaConnect
     },
     {
       id: 'google',
