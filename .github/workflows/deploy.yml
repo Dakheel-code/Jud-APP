@@ -1,9 +1,14 @@
-name: Deploy to GitHub Pages
+name: Deploy to GitHub Pages (DISABLED - Use Vercel Instead)
+
+# This workflow is disabled because Next.js App Router with API routes
+# cannot be deployed to GitHub Pages (static hosting only).
+# Please deploy to Vercel instead: https://vercel.com
 
 on:
-  push:
-    branches:
-      - main
+  # Disabled - uncomment to enable
+  # push:
+  #   branches:
+  #     - main
   workflow_dispatch:
 
 permissions:
