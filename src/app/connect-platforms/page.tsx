@@ -4,6 +4,8 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
 import { ExternalLink } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 function ConnectPlatformsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();

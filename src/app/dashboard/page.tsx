@@ -5,6 +5,8 @@ import { useEffect, useState, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { TrendingUp, DollarSign, MousePointerClick, ShoppingCart } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 interface InsightData {
   date: string;
   spend: number;

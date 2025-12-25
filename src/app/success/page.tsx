@@ -4,6 +4,8 @@ import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 function SuccessContent() {
   const searchParams = useSearchParams();
   const storeName = searchParams.get('store') || 'متجرك';
