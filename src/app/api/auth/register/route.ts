@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { users, stores } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { hashPassword, createSession, setSessionCookie } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
+    const db = getDb();
     const { fullName, email, password, storeName, storeUrl } = await request.json();
 
     if (!fullName || !email || !password || !storeName) {

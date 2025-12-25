@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { snapInsightsDaily } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq, gte } from 'drizzle-orm';
@@ -7,6 +7,7 @@ import { calculateForecast } from '@/lib/forecast';
 
 export async function POST(request: NextRequest) {
   try {
+    const db = getDb();
     const session = await getSession();
 
     if (!session) {

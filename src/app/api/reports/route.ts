@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/db';
+import { getDb } from '@/db';
 import { reports } from '@/db/schema';
 import { getSession } from '@/lib/auth';
 import { eq, desc } from 'drizzle-orm';
 
 export async function GET() {
   try {
+    const db = getDb();
     const session = await getSession();
 
     if (!session) {

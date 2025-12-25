@@ -32,9 +32,9 @@ git push -u origin main
 في Netlify Dashboard → Site settings → Environment variables، أضف:
 
 ```
-DATABASE_URL=postgresql://postgres:D@k11331133@db.hdmdcahprezelyucbicw.supabase.co:5432/postgres
-JWT_SECRET=1b5582f275ceff4870747b7a94ed8abc24ebdea65e4c46ba44281a2d998886a5
-ENCRYPTION_KEY=85e6f3d7e00756c2ec1761f51458db69
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:5432/DB
+JWT_SECRET=your_strong_random_jwt_secret
+ENCRYPTION_KEY=your_32_character_encryption_key
 NEXT_PUBLIC_APP_URL=https://your-site-name.netlify.app
 SNAPCHAT_CLIENT_ID=your_client_id
 SNAPCHAT_CLIENT_SECRET=your_client_secret

@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
   reactStrictMode: true,
   images: {
-    unoptimized: true,
+    domains: ['jud.sa'],
   },
-  trailingSlash: true,
+  i18n: {
+    locales: ['ar'],
+    defaultLocale: 'ar',
+  },
   eslint: {
     ignoreDuringBuilds: true,
   },

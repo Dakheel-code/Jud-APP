@@ -54,10 +54,9 @@ https://vercel.com/signup
 
 ### 4. أضف متغيرات البيئة
 في قسم Environment Variables:
-
 ```env
-TIKTOK_CLIENT_KEY=aw1y4abzqqtr24uy
-TIKTOK_CLIENT_SECRET=pnK8S8CTeSyQj8vRSiTdt0Z0BVqKGxmM
+TIKTOK_CLIENT_KEY=your_tiktok_client_key
+TIKTOK_CLIENT_SECRET=your_tiktok_client_secret
 TIKTOK_REDIRECT_URI=https://your-project.vercel.app/api/auth/tiktok/callback
 
 SNAPCHAT_CLIENT_ID=your_value
